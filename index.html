@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Алекс Мастеров — независимый дизайнер</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke='%23FF4D00' stroke-width='3' stroke-linecap='round'><line x1='12' y1='2' x2='12' y2='22'/><line x1='3.3' y1='7' x2='20.7' y2='17'/><line x1='20.7' y1='7' x2='3.3' y2='17'/></g></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#131211;
+    --panel:#0d0c0b;
+    --ink:#ECE7DC;
+    --muted:#948d80;
+    --line:rgba(236,231,220,.14);
+    --accent:#FF4D00;
+    --accent-ink:#1a0c04;
+    --f-disp:'Unbounded',sans-serif;
+    --f-body:'Golos Text',sans-serif;
+    --f-mono:'IBM Plex Mono',monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--f-body);
+    font-size:17px;
+    line-height:1.6;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body.lock{overflow:hidden}
+  ::selection{background:var(--accent);color:var(--accent-ink)}
+  ::-webkit-scrollbar{width:10px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:#3a3733;border-radius:99px}
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:none}
+  .mono{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+  /* зерно */
+  body::after{
+    content:'';position:fixed;inset:-50%;z-index:200;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ===== прелоадер ===== */
+  .preloader{
+    position:fixed;inset:0;z-index:400;background:var(--panel);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;
+    transition:transform .85s var(--ease);
+  }
+  .preloader.hide{transform:translateY(-101%)}
+  .pre-num{font-family:var(--f-disp);font-weight:300;font-size:clamp(3rem,9vw,6rem);font-variation-settings:'wght' 300}
+  .pre-label{color:var(--muted)}
+  .pre-bar{width:min(260px,60vw);height:1px;background:var(--line);overflow:hidden}
+  .pre-bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .15s linear}
+
+  /* ===== курсор ===== */
+  .cursor-dot,.cursor-ring{display:none}
+  @media (hover:hover) and (pointer:fine){
+    html.has-cursor *{cursor:none}
+    html.has-cursor .cursor-dot{display:block;position:fixed;z-index:300;left:0;top:0;width:6px;height:6px;border-radius:50%;background:var(--accent);pointer-events:none}
+    html.has-cursor .cursor-ring{
+      display:flex;align-items:center;justify-content:center;position:fixed;z-index:299;left:0;top:0;
+      width:36px;height:36px;border-radius:50%;border:1px solid rgba(236,231,220,.5);
+      pointer-events:none;transition:width .35s var(--ease),height .35s var(--ease),background .35s,border-color .35s;
+    }
+    html.has-cursor .cursor-ring .cursor-txt{
+      font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+      color:var(--accent-ink);opacity:0;transition:opacity .2s;
+    }
+    html.has-cursor .cursor-ring[data-mode="link"]{width:56px;height:56px;border-color:var(--accent)}
+    html.has-cursor .cursor-ring[data-mode="view"]{width:88px;height:88px;background:var(--accent);border-color:var(--accent)}
+    html.has-cursor .cursor-ring[data-mode="view"] .cursor-txt{opacity:1}
+    html.has-cursor .cursor-ring[data-mode="view"] ~ .cursor-dot{opacity:0}
+  }
+
+  /* ===== хедер ===== */
+  .site-header{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1.1rem clamp(1.2rem,4vw,3rem);
+    transition:background .4s,border-color .4s;
+    border-bottom:1px solid transparent;
+  }
+  .site-header.scrolled{background:rgba(19,18,17,.82);backdrop-filter:blur(12px);border-color:var(--line)}
+  .progress{position:absolute;left:0;bottom:-1px;height:2px;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+  .logo{font-family:var(--f-disp);font-weight:600;font-size:.95rem;letter-spacing:.04em;display:flex;align-items:center;gap:.45rem}
+  .logo svg{width:11px;height:11px;color:var(--accent);transition:transform .6s var(--ease)}
+  .logo:hover svg{transform:rotate(180deg)}
+  .main-nav{display:flex;gap:2.2rem}
+  .main-nav a{position:relative;padding:.2rem 0;color:var(--muted);transition:color .3s}
+  .main-nav a::after{content:'';position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:right;transition:transform .35s var(--ease)}
+  .main-nav a:hover{color:var(--ink)}
+  .main-nav a:hover::after{transform:scaleX(1);transform-origin:left}
+  .header-right{display:flex;align-items:center;gap:1.6rem}
+  .clock{color:var(--muted)}
+  .btn-contact{
+    font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid var(--line);border-radius:99px;padding:.6rem 1.3rem;
+    transition:background .35s,color .35s,border-color .35s;
+  }
+  .btn-contact:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .burger{display:none;width:34px;height:34px;position:relative}
+  .burger i{position:absolute;left:6px;right:6px;height:2px;background:var(--ink);transition:.35s var(--ease)}
+  .burger i:first-child{top:12px}.burger i:last-child{bottom:12px}
+  body.menu-open .burger i:first-child{top:16px;transform:rotate(45deg)}
+  body.menu-open .burger i:last-child{bottom:16px;transform:rotate(-45deg)}
+
+  /* мобильное меню */
+  .mobile-menu{
+    position:fixed;inset:0;z-index:90;background:var(--panel);
+    display:flex;flex-direction:column;justify-content:center;padding:0 2rem;gap:.4rem;
+    transform:translateY(-100%);transition:transform .6s var(--ease);
+  }
+  body.menu-open .mobile-menu{transform:translateY(0)}
+  .mobile-menu a{font-family:var(--f-disp);font-weight:400;font-size:clamp(2rem,9vw,3.4rem);padding:.35rem 0;color:var(--muted);transition:color .3s}
+  .mobile-menu a:hover{color:var(--accent)}
+  .mobile-menu .mm-mail{margin-top:2.5rem;font-family:var(--f-mono);font-size:13px;color:var(--accent);text-transform:none;letter-spacing:.05em}
+
+  /* ===== hero ===== */
+  .hero{
+    min-height:100svh;display:flex;flex-direction:column;justify-content:space-between;
+    padding:6.5rem clamp(1.2rem,4vw,3rem) 2.5rem;
+  }
+  .hero-top{display:flex;justify-content:space-between;gap:1rem;color:var(--muted)}
+  .status{display:flex;align-items:center;gap:.55rem}
+  .status i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .hero-title{
+    font-family:var(--f-disp);font-weight:300;
+    font-size:clamp(2rem,10.5vw,9rem);
+    line-height:.98;letter-spacing:-.01em;text-transform:uppercase;
+    margin:auto 0;user-select:none;
+  }
+  .hero-title .line{overflow:hidden;display:flex;align-items:center;gap:.06em}
+  .hero-title .line.l2{justify-content:flex-end;padding-right:.5em}
+  .hero-title .ch{display:inline-block;transform:translateY(112%);transition:transform 1s var(--ease);will-change:transform,font-variation-settings}
+  body.ready .hero-title .ch{transform:translateY(0)}
+  .hero-star{width:.55em;height:.55em;color:var(--accent);flex:none;animation:spin 14s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hero-bottom{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;
+    opacity:0;transform:translateY(24px);transition:opacity .9s .5s,transform .9s .5s var(--ease);
+  }
+  body.ready .hero-bottom{opacity:1;transform:none}
+  .hero-bottom p{max-width:36ch;font-size:1.05rem;color:var(--muted)}
+  .hero-bottom p b{color:var(--ink);font-weight:500}
+  .scroll-hint{display:flex;flex-direction:column;align-items:center;gap:.7rem;color:var(--muted)}
+  .scroll-hint .wire{width:1px;height:52px;background:var(--line);overflow:hidden;position:relative}
+  .scroll-hint .wire::after{content:'';position:absolute;left:0;top:-100%;width:100%;height:100%;background:var(--accent);animation:drip 1.8s var(--ease) infinite}
+  @keyframes drip{to{top:100%}}
+
+  /* ===== marquee ===== */
+  .marquee{overflow:hidden;background:var(--accent);color:var(--accent-ink);padding:1rem 0;transform:rotate(-1.4deg) scale(1.03)}
+  .marquee-track{display:flex;width:max-content;animation:scroll 22s linear infinite}
+  .marquee:hover .marquee-track{animation-play-state:paused}
+  @keyframes scroll{to{transform:translateX(-50%)}}
+  .marquee-group{display:flex;align-items:center;flex:none}
+  .marquee-group span{font-family:var(--f-disp);font-weight:500;font-size:clamp(1.1rem,2.6vw,1.8rem);text-transform:uppercase;white-space:nowrap;padding:0 1.6rem}
+  .marquee-group svg{width:16px;height:16px;flex:none}
+
+  /* ===== общее для секций ===== */
+  section{padding:clamp(5rem,10vw,9rem) clamp(1.2rem,4vw,3rem)}
+  .sec-header{display:block;margin-bottom:clamp(2.5rem,5vw,4.5rem)}
+  .sec-label{color:var(--muted);display:flex;align-items:center;gap:.8rem;margin-bottom:1.6rem}
+  .sec-label::before{content:'';width:34px;height:1px;background:var(--accent)}
+  .sec-title{
+    font-family:var(--f-disp);font-weight:500;text-transform:uppercase;
+    font-size:clamp(2.2rem,7.5vw,6rem);line-height:1.02;letter-spacing:-.01em;
+    margin-bottom:0;
+  }
+  .sec-title .stroke{color:transparent;-webkit-text-stroke:1.5px var(--ink)}
+  .sec-title sup{font-size:.32em;color:var(--accent);-webkit-text-stroke:0;font-weight:400;margin-left:.4em}
+  .reveal-line{overflow:hidden}
+  .reveal-line>span{display:block;transform:translateY(112%);transition:transform 1s var(--ease)}
+  .in-view .reveal-line>span,.reveal-line.in-view>span{transform:translateY(0)}
+
+  /* ===== горизонтальный слайдер проектов ===== */
+  .works-slider-container{
+    overflow:hidden;
+    margin:0 calc(-1 * clamp(1.2rem,4vw,3rem));
+    padding:0 clamp(1.2rem,4vw,3rem);
+    cursor:grab;
+  }
+  .works-slider-container:active{cursor:grabbing}
+  .works-slider-track{
+    display:flex;
+    gap:2rem;
+    overflow-x:auto;
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+    padding-bottom:1rem;
+  }
+  .works-slider-track::-webkit-scrollbar{display:none}
+
+  .work-card{
+    flex:0 0 clamp(280px, 35vw, 420px);
+    background:var(--panel);
+    border:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    transition:border-color .3s, transform .4s var(--ease);
+  }
+  .work-card:hover{border-color:var(--accent);transform:translateY(-6px)}
+  .work-card-img{width:100%;aspect-ratio:4/3;object-fit:cover}
+  .work-card-body{padding:1.5rem;display:flex;flex-direction:column;gap:.8rem;flex-grow:1}
+  .work-card-top{display:flex;justify-content:space-between;align-items:center}
+  .work-card-title{font-family:var(--f-disp);font-weight:500;font-size:1.4rem;text-transform:uppercase}
+  .work-card-cat{color:var(--accent);font-size:.85rem}
+  .work-card-arrow{margin-top:auto;padding-top:1rem;display:flex;justify-content:flex-end;color:var(--muted);transition:color .3s, transform .3s}
+  .work-card:hover .work-card-arrow{color:var(--accent);transform:translateX(4px)}
+
+  /* ===== обо мне ===== */
+  .about-grid{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:clamp(2.5rem,6vw,6rem);align-items:start}
+  .about-photo{overflow:hidden;position:relative}
+  .about-photo img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:grayscale(1) contrast(1.08);transition:filter .8s;transform:scale(1.12);will-change:transform}
+  .about-photo:hover img{filter:grayscale(0) contrast(1)}
+  .about-photo figcaption{position:absolute;left:1rem;bottom:1rem;background:var(--bg);padding:.4rem .8rem;color:var(--muted)}
+  .manifest{
+    font-family:var(--f-disp);font-weight:300;
+    font-size:clamp(1.3rem,2.6vw,2rem);line-height:1.35;letter-spacing:0;
+  }
+  .manifest em{font-style:normal;color:var(--accent)}
+  .manifest .hl{border-bottom:2px solid var(--accent)}
+  .about-desc{margin-top:2rem;color:var(--muted);max-width:56ch}
+  .about-note{margin-top:1.6rem;color:var(--muted);opacity:.85}
+  .stats{list-style:none;display:flex;flex-wrap:wrap;margin-top:3.2rem;border-top:1px solid var(--line)}
+  .stats li{flex:1 1 140px;padding:1.4rem 1.4rem 0 0}
+  .stats li+li{border-left:1px solid var(--line);padding-left:1.4rem}
+  .stats b{display:block;font-family:var(--f-disp);font-weight:400;font-size:clamp(2rem,4.5vw,3.2rem);line-height:1.1}
+  .stats span{color:var(--muted)}
+
+  /* ===== услуги ===== */
+  .svc{border-top:1px solid var(--line)}
+  .svc:last-child{border-bottom:1px solid var(--line)}
+  .svc-head{
+    width:100%;display:grid;grid-template-columns:3.2rem 1fr 2rem;align-items:center;gap:1.4rem;
+    padding:1.7rem 0;text-align:left;transition:padding .4s var(--ease);
+  }
+  .svc-head .s-num{color:var(--muted)}
+  .svc-head .s-name{font-family:var(--f-disp);font-weight:400;text-transform:uppercase;font-size:clamp(1.25rem,3.4vw,2.3rem);transition:color .3s,transform .4s var(--ease)}
+  .svc-head:hover .s-name{transform:translateX(.8rem);color:var(--accent)}
+  .svc-head .s-plus{position:relative;width:18px;height:18px;justify-self:end}
+  .svc-head .s-plus::before,.svc-head .s-plus::after{content:'';position:absolute;background:var(--ink);transition:transform .45s var(--ease),background .3s}
+  .svc-head .s-plus::before{left:0;top:8px;width:18px;height:2px}
+  .svc-head .s-plus::after{left:8px;top:0;width:2px;height:18px}
+  .svc.open .s-plus::before{transform:rotate(45deg);background:var(--accent)}
+  .svc.open .s-plus::after{transform:rotate(45deg);background:var(--accent)}
+  .svc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .55s var(--ease)}
+  .svc.open .svc-body{grid-template-rows:1fr}
+  .svc-body>div{overflow:hidden}
+  .svc-inner{display:flex;gap:2.5rem;align-items:baseline;flex-wrap:wrap;padding:0 0 2.2rem 4.6rem}
+  .svc-inner p{max-width:52ch;color:var(--muted);flex:1 1 320px}
+  .s-tags{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+  .s-tags i{font-style:normal;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:.35rem .85rem;color:var(--muted)}
+
+  /* ===== футер ===== */
+  .footer{background:var(--panel);border-top:1px solid var(--line);padding:clamp(5rem,10vw,9rem) clamp(1.2rem,4vw,3rem) 2rem}
+  .cta{
+    font-family:var(--f-disp);font-weight:500;text-transform:uppercase;
+    font-size:clamp(2.1rem,7.4vw,5.8rem);line-height:1.04;
+  }
+  .cta .stroke{color:transparent;-webkit-text-stroke:1.5px var(--ink)}
+  .cta .fill{color:var(--accent)}
+  .mail-row{display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap;margin:3rem 0 1rem}
+  .big-mail{
+    font-family:var(--f-disp);font-weight:300;font-size:clamp(1.15rem,3.4vw,2.4rem);
+    display:inline-flex;align-items:center;gap:.6rem;position:relative;
+  }
+  .big-mail::after{content:'';position:absolute;left:0;bottom:-6px;width:100%;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease)}
+  .big-mail:hover::after{transform:scaleX(1);transform-origin:left}
+  .big-mail svg{width:.85em;height:.85em;color:var(--accent);transition:transform .4s var(--ease)}
+  .big-mail:hover svg{transform:translate(4px,-4px)}
+  .copy-btn{
+    font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.55rem 1.1rem;
+    transition:.35s;
+  }
+  .copy-btn:hover{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+  .foot-links{display:flex;gap:2rem;flex-wrap:wrap;margin-top:3rem}
+  .foot-links a{display:inline-flex;align-items:center;gap:.45rem;color:var(--muted);transition:color .3s}
+  .foot-links a svg{width:12px;height:12px;transition:transform .35s var(--ease)}
+  .foot-links a:hover{color:var(--accent)}
+  .foot-links a:hover svg{transform:translate(3px,-3px)}
+  .foot-bottom{
+    display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+    margin-top:4.5rem;padding-top:1.4rem;border-top:1px solid var(--line);color:var(--muted);
+  }
+  .to-top{color:var(--muted);transition:color .3s}
+  .to-top:hover{color:var(--accent)}
+
+  /* ===== кейс-оверлей ===== */
+  .case{position:fixed;inset:0;z-index:150;visibility:hidden;pointer-events:none}
+  .case.open{visibility:visible;pointer-events:auto}
+  .case-backdrop{position:absolute;inset:0;background:rgba(10,9,8,.7);backdrop-filter:blur(6px);opacity:0;transition:opacity .5s}
+  .case.open .case-backdrop{opacity:1}
+  .case-panel{
+    position:absolute;inset:0;top:2.5vh;margin:0 auto;max-width:1100px;
+    background:var(--panel);border:1px solid var(--line);
+    transform:translateY(40px);opacity:0;transition:transform .6s var(--ease),opacity .5s;
+    display:flex;flex-direction:column;
+  }
+  .case.open .case-panel{transform:none;opacity:1}
+  .case-top{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.6rem;border-bottom:1px solid var(--line);flex:none}
+  .case-close{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);transition:color .3s}
+  .case-close:hover{color:var(--accent)}
+  .case-close svg{width:14px;height:14px}
+  .case-scroll{overflow-y:auto;padding:clamp(1.6rem,4vw,3rem);transition:opacity .25s}
+  .case-scroll h3{font-family:var(--f-disp);font-weight:500;text-transform:uppercase;font-size:clamp(1.8rem,5vw,3.4rem);line-height:1.05}
+  .case-meta{color:var(--muted);margin:.9rem 0 1.8rem}
+  .case-meta b{color:var(--accent);font-weight:500}
+  .case-scroll figure{overflow:hidden;margin-bottom:2rem}
+  .case-scroll figure img{width:100%;aspect-ratio:16/9;object-fit:cover}
+  .case-cols{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem}
+  .case-cols h4{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.7rem}
+  .case-cols p{color:var(--muted);font-size:.98rem}
+  .case-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2.4rem}
+  .case-tags i{font-style:normal;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:.35rem .85rem;color:var(--muted)}
+  .case-next{
+    width:100%;display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--line);padding:1.4rem 0 .4rem;
+    font-family:var(--f-disp);font-weight:400;font-size:1rem;text-transform:uppercase;
+    color:var(--muted);transition:color .3s;
+  }
+  .case-next:hover{color:var(--accent)}
+  .case-next svg{width:20px;height:20px}
+
+  /* ===== toast ===== */
+  .toast{
+    position:fixed;left:50%;bottom:2rem;z-index:250;transform:translate(-50%,150%);
+    background:var(--accent);color:var(--accent-ink);
+    font-family:var(--f-mono);font-size:12.5px;letter-spacing:.04em;
+    padding:.85rem 1.5rem;border-radius:99px;
+    transition:transform .5s var(--ease);max-width:88vw;text-align:center;
+  }
+  .toast.show{transform:translate(-50%,0)}
+
+  /* ===== адаптив ===== */
+  @media (max-width:900px){
+    .main-nav,.clock{display:none}
+    .burger{display:block}
+    .about-grid{grid-template-columns:1fr}
+    .about-photo{max-width:440px}
+    .case-cols{grid-template-columns:1fr}
+    .svc-inner{padding-left:0}
+    .hero-bottom{flex-direction:column;align-items:flex-start}
+    .scroll-hint{flex-direction:row;align-items:center}
+    .scroll-hint .wire{width:52px;height:1px}
+    .scroll-hint .wire::after{top:0;left:-100%;width:100%;height:100%;animation:dripH 1.8s var(--ease) infinite}
+    @keyframes dripH{to{left:100%}}
+  }
+</style>
+</head>
+<body>
+
+<!-- прелоадер -->
+<div class="preloader" id="preloader">
+  <div class="pre-num" id="preNum">000</div>
+  <div class="pre-bar"><i id="preBar"></i></div>
+  <div class="pre-label mono">Портфолио загружается</div>
+</div>
+
+<!-- кастомный курсор -->
+<div class="cursor-ring" id="cursorRing"><span class="cursor-txt" id="cursorTxt">Смотреть</span></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<!-- хедер -->
+<header class="site-header" id="siteHeader">
+  <a href="#" class="logo" data-cursor="link">МАСТЕРОВ
+    <svg viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="20.7" y1="7" x2="3.3" y2="17"/></g></svg>
+  </a>
+  <nav class="main-nav mono">
+    <a href="#works" data-cursor="link">Проекты</a>
+    <a href="#about" data-cursor="link">Обо мне</a>
+    <a href="#services" data-cursor="link">Услуги</a>
+    <a href="#contact" data-cursor="link">Контакт</a>
+  </nav>
+  <div class="header-right">
+    <span class="clock mono" id="clock">МСК 00:00:00</span>
+    <a href="#contact" class="btn-contact magnetic" data-cursor="link">Связаться</a>
+    <button class="burger" id="burger" aria-label="Меню"><i></i><i></i></button>
+  </div>
+  <span class="progress" id="progress"></span>
+</header>
+
+<!-- мобильное меню -->
+<nav class="mobile-menu" id="mobileMenu">
+  <a href="#works">Проекты</a>
+  <a href="#about">Обо мне</a>
+  <a href="#services">Услуги</a>
+  <a href="#contact">Контакт</a>
+  <a href="mailto:aleks.masterov@inbox.ru" class="mm-mail">aleks.masterov@inbox.ru</a>
+</nav>
+
+<!-- hero -->
+<section class="hero">
+  <div class="hero-top mono">
+    <span class="status"><i></i>Открыт для проектов — <span id="dynamicSeasonYear">осень 2026</span></span>
+    <span>Санкт-Петербург · работаю по всему миру</span>
+  </div>
+  <h1 class="hero-title">
+    <span class="line l1"><span data-split>АЛЕКС</span></span>
+    <span class="line l2">
+      <svg class="hero-star" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="20.7" y1="7" x2="3.3" y2="17"/></g></svg>
+      <span data-split>МАСТЕРОВ</span>
+    </span>
+  </h1>
+  <div class="hero-bottom">
+    <p>Проектирую <b>айдентику, сайты и цифровые продукты</b> для брендов, которые хотят говорить коротко, тепло и точно. Восемь лет практики,более шестидесяти проектов</p>
+    <div class="scroll-hint mono">
+      <span>Листайте</span>
+      <span class="wire"></span>
+    </div>
+  </div>
+</section>
+
+<!-- бегущая строка -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track" id="marqueeTrack">
+    <div class="marquee-group">
+      <span>Айдентика</span><svg viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="20.7" y1="7" x2="3.3" y2="17"/></g></svg>
+      <span>Веб-дизайн</span><svg viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="20.7" y1="7" x2="3.3" y2="17"/></g></svg>
+      <span>Автоматизация</span><svg viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="20.7" y1="7" x2="3.3" y2="17"/></g></svg>
+      <span>Арт-дирекшн</span><svg viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="20.7" y1="7" x2="3.3" y2="17"/></g></svg>
+    </div>
+  </div>
+</div>
+
+<!-- проекты -->
+<section id="works">
+  <div class="sec-label mono reveal-line"><span>01 / Избранные проекты</span></div>
+  <div class="sec-header">
+    <h2 class="sec-title">
+      <span class="reveal-line"><span><span class="stroke">Проекты</span><sup>(05)</sup></span></span>
+    </h2>
+  </div>
+  
+  <div class="works-slider-container" id="sliderContainer">
+    <div class="works-slider-track" id="worksTrack"></div>
+  </div>
+</section>
+
+<!-- обо мне -->
+<section id="about">
+  <div class="sec-label mono reveal-line"><span>02 / Обо мне</span></div>
+  <div class="about-grid">
+    <figure class="about-photo">
+      <img src="https://raw.githubusercontent.com/aleks1666masterov/showroom/refs/heads/main/1.jpg" alt="Портрет: Алекс Мастеров в мастерской">
+      <figcaption class="mono">Санкт-Петербург, Мастерская — 2026</figcaption>
+    </figure>
+    <div>
+      <p class="manifest reveal-line"><span>Дизайн — это <em>не украшение</em>,</span></p>
+      <p class="manifest reveal-line"><span>а способ <span class="hl">думать вслух</span>.</span></p>
+      <p class="manifest reveal-line"><span>Я собираю смыслы в форму:</span></p>
+      <p class="manifest reveal-line"><span>строгую, тёплую и честную.</span></p>
+      <p class="about-desc">Восемь лет занимаюсь дизайном, автоматизацией,конструированием и цифровыми проектами. Работал в студиях и агентствах, теперь — сам на себя. Сотрудничаю с брендами, заводами и культурными институтами: от первого эскиза до финального продукта, без срыва сроков и испорченного телефона.</p>
+      <p class="about-note mono">Ранее: студии, производства, агентства, научный клуб, три кофейни и одна проектная резиденция.</p>
+      <ul class="stats">
+        <li><b>08</b><span class="mono">лет практики</span></li>
+        <li><b>64</b><span class="mono">проекта выпущено</span></li>
+        <li><b>12</b><span class="mono">наград и шорт-листов</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- услуги -->
+<section id="services">
+  <div class="sec-label mono reveal-line"><span>03 / Что я делаю</span></div>
+  <h2 class="sec-title"><span class="reveal-line"><span><span class="stroke">Услуги</span></span></span></h2>
+  <div id="svcList"></div>
+</section>
+
+<!-- футер / контакт -->
+<footer class="footer" id="contact">
+  <div class="sec-label mono reveal-line"><span>04 / Контакт</span></div>
+  <h2 class="cta">
+    <span class="reveal-line"><span><span class="stroke">Есть задача?</span></span></span>
+    <span class="reveal-line"><span><span class="fill">Давайте обсудим</span></span></span>
+  </h2>
+  <div class="mail-row">
+    <a class="big-mail magnetic" href="mailto:aleks.masterov@inbox.ru" data-cursor="link">aleks.masterov@inbox.ru
+      <svg viewBox="0 0 24 24" fill="none"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <button class="copy-btn" id="copyBtn" data-cursor="link">Скопировать</button>
+  </div>
+  <div class="foot-links mono">
+    <a href="https://t.me/alex13master" target="_blank" rel="noopener" data-cursor="link">Telegram
+      <svg viewBox="0 0 24 24" fill="none"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <a href="https://www.behance.net" target="_blank" rel="noopener" data-cursor="link">Behance
+      <svg viewBox="0 0 24 24" fill="none"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  </div>
+  <div class="foot-bottom mono">
+    <span>© 2026 Алекс Мастеров</span>
+    <span>Дизайн и код — свои, без шаблонов</span>
+    <button class="to-top" id="toTop" data-cursor="link">Наверх ↑</button>
+  </div>
+</footer>
+
+<!-- кейс-оверлей -->
+<div class="case" id="case" aria-hidden="true">
+  <div class="case-backdrop" id="caseBackdrop"></div>
+  <div class="case-panel">
+    <div class="case-top">
+      <span class="mono" id="caseNum">01 / 05</span>
+      <button class="case-close" id="caseClose" data-cursor="link">Закрыть
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="case-scroll" id="caseScroll">
+      <h3 id="caseName"></h3>
+      <div class="case-meta mono" id="caseMeta"></div>
+      <figure><img id="caseImg" src="" alt=""></figure>
+      <div class="case-cols">
+        <div><h4>Задача</h4><p id="caseTask"></p></div>
+        <div><h4>Решение</h4><p id="caseSol"></p></div>
+      </div>
+      <div class="case-tags" id="caseTags"></div>
+      <button class="case-next" id="caseNext" data-cursor="link">
+        <span>Следующий проект</span>
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ============ Динамическое время года и год ============ */
+function updateDynamicSeasonYear() {
+  const now = new Date();
+  const month = now.getMonth(); // 0-11
+  const year = now.getFullYear();
+  let season = '';
+
+  if (month === 11 || month === 0 || month === 1) {
+    season = 'зима';
+  } else if (month >= 2 && month <= 4) {
+    season = 'весна';
+  } else if (month >= 5 && month <= 7) {
+    season = 'лето';
+  } else {
+    season = 'осень';
+  }
+
+  const el = document.getElementById('dynamicSeasonYear');
+  if (el) {
+    el.textContent = `${season} ${year}`;
+  }
+}
+updateDynamicSeasonYear();
+
+/* ============ данные проектов ============ */
+const projects = [
+  {
+    name:'KUPOL', cat:'Айдентика', client:'Архитектурное бюро «Купол»',
+    img:'https://raw.githubusercontent.com/aleks1666masterov/showroom/refs/heads/main/6.jpg',
+    task:'Молодому питерскому бренду нужен был образ, который отличает его от сотен конкурентов и сразу говорит о подходе: форма следует за светом.',
+    sol:'Знак-купол, собранный из осколков культур, крупная стильная типографика и система, которая живёт одинаково уверенно — от визитки до милионных контрактов.',
+    tags:['Логотип','Фирменный стиль','Гайдлайн','Навигация']
+  },
+  {
+    name:'ТЕРРА', cat:'Автоматизация', client:'Фестиваль современной скульптуры',
+    img:'https://raw.githubusercontent.com/aleks1666masterov/showroom/refs/heads/main/4.jpg',
+    task:'Локальный продукт конструкторского бюро Казани',
+    sol:'Авто перестроение приборов, где управление происходит голосом в среде солидворкс.Теперь чертежи создаются автоматически.Конверсия выручки выросла в 2,4 раза за первый месяц.',
+    tags:['UX','Веб-дизайн','Автоматизация','Прототип']
+  },
+  {
+    name:'ЧЁРНЫЙ САХАР', cat:'Брендинг', client:'Обжарщик кофе',
+    img:'https://raw.githubusercontent.com/aleks1666masterov/showroom/refs/heads/main/5.jpg',
+    task:'Выйти на полки гастромаркетов с вывеской, которую видно с трёх метров и не стыдно держать в руках.',
+    sol:'Дизайн проект для витрин мегаполисов',
+    tags:['Нейминг','Упаковка','Иллюстрация','Арт-дирекшн']
+  },
+  {
+    name:'ОРБИТА', cat:'Веб / Моушн', client:'Digital-журнал о космосе',
+    img:'https://raw.githubusercontent.com/aleks1666masterov/showroom/refs/heads/main/3.jpg',
+    task:'Рассказывать о сложном просто: редакции нужен был формат, где наука читается как история, а не как учебник.',
+    sol:'Длинные скролл-статьи с параллаксом и 3D-схемами, собственная типографическая сетка и информация, которую легко читать и запоминать.',
+    tags:['Редакционный дизайн','Веб','3D','Подписка']
+  },
+  {
+    name:'СТЕКЛО', cat:'Айдентика / Упаковка', client:'Витражная мастерская',
+    img:'https://raw.githubusercontent.com/aleks1666masterov/showroom/refs/heads/main/2.jpg',
+    task:'Мастерской, которая реставрирует дореволюционные светильники, нужен был образ, соединяющий ремесло и современность.',
+    sol:'Культовый знак-переплёт на пороге времён',
+    tags:['Логотип','Упаковка','Печатная продукция']
+  }
+];
+
+const services = [
+  {name:'Айдентика', text:'Нейминг, логотипы и фирменные стили, которые выдерживают и вывеску, и фавикон. Довожу систему до гайдлайна, по которому команда сможет работать без меня.', tags:['Нейминг','Логотип','Фирменный стиль','Брендбук']},
+  {name:'Веб-дизайн', text:'Сайты, которые рассказывают историю, а не перечисляют пункты меню. От прототипа до дизайн-системы и авторского надзора за вёрсткой.', tags:['UX/UI','Лендинги','Дизайн-системы','Прототипы']},
+  {name:'Автоматизация', text:'Оптимизация процессов конструирования , настройка сквозных рабочих пространств, интеграция AI-инструментов и разработка умных шаблонов для ускорения проектов.', tags:['Workflow','No-code','AI-Инструменты','Дизайн-системы']},
+  {name:'Арт-дирекшн', text:'Задаю визуальный тон бренду целиком: от концепции и съёмки до типографики в презентациях. Смыслов много, а образ один.', tags:['Концепция','Съёмка','Типографика','Гайды']}
+];
+
+const arrowSVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* ============ слайдер проектов ============ */
+const worksTrack = document.getElementById('worksTrack');
+worksTrack.innerHTML = projects.map((p,i)=>`
+  <div class="work-card" data-index="${i}" data-cursor="view" data-label="Смотреть" tabindex="0" role="button" aria-label="Открыть проект ${p.name}">
+    <img src="${p.img}" alt="${p.name}" class="work-card-img">
+    <div class="work-card-body">
+      <div class="work-card-top">
+        <h3 class="work-card-title">${p.name}</h3>
+        <span class="mono work-card-cat">${p.cat}</span>
+      </div>
+      <div class="work-card-arrow">${arrowSVG}</div>
+    </div>
+  </div>`).join('');
+
+/* Управление слайдером: колесо мыши + драг/свайп (стрелки убраны) */
+const sliderContainer = document.getElementById('sliderContainer');
+
+/* Прокрутка колесом мыши по горизонтали */
+sliderContainer.addEventListener('wheel', (e)=>{
+  if (e.deltaY !== 0) {
+    e.preventDefault();
+    worksTrack.scrollLeft += e.deltaY;
+  }
+}, {passive: false});
+
+/* Перетаскивание мышью (Drag to scroll) */
+let isDown = false;
+let startX;
+let scrollLeft;
+
+sliderContainer.addEventListener('mousedown', (e) => {
+  isDown = true;
+  startX = e.pageX - worksTrack.offsetLeft;
+  scrollLeft = worksTrack.scrollLeft;
+});
+sliderContainer.addEventListener('mouseleave', () => { isDown = false; });
+sliderContainer.addEventListener('mouseup', () => { isDown = false; });
+sliderContainer.addEventListener('mousemove', (e) => {
+  if(!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - worksTrack.offsetLeft;
+  const walk = (x - startX) * 1.5;
+  worksTrack.scrollLeft = scrollLeft - walk;
+});
+
+/* ============ услуги-аккордеон ============ */
+document.getElementById('svcList').innerHTML = services.map((s,i)=>`
+  <div class="svc">
+    <button class="svc-head" data-cursor="link" aria-expanded="false">
+      <span class="s-num mono">${String(i+1).padStart(2,'0')}</span>
+      <span class="s-name">${s.name}</span>
+      <span class="s-plus" aria-hidden="true"></span>
+    </button>
+    <div class="svc-body"><div><div class="svc-inner">
+      <p>${s.text}</p>
+      <div class="s-tags">${s.tags.map(t=>`<i>${t}</i>`).join('')}</div>
+    </div></div></div>
+  </div>`).join('');
+
+document.querySelectorAll('.svc-head').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.svc.open').forEach(o=>{
+      o.classList.remove('open');
+      o.querySelector('.svc-head').setAttribute('aria-expanded','false');
+    });
+    if(!wasOpen){ item.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  });
+});
+
+/* ============ разбиение hero на буквы ============ */
+document.querySelectorAll('[data-split]').forEach(el=>{
+  const text = el.textContent; el.textContent='';
+  [...text].forEach(ch=>{
+    const s = document.createElement('span');
+    s.className = 'ch'; s.textContent = ch;
+    el.appendChild(s);
+  });
+});
+document.querySelectorAll('.hero-title .ch').forEach((ch,i)=>{
+  ch.style.transitionDelay = (0.05 + i*0.045) + 's';
+  ch.style.fontVariationSettings = "'wght' 300";
+});
+
+/* ============ прелоадер ============ */
+const pre = document.getElementById('preloader'),
+      preNum = document.getElementById('preNum'),
+      preBar = document.getElementById('preBar');
+let prog = 0;
+const preTimer = setInterval(()=>{
+  prog = Math.min(100, prog + Math.random()*16 + 7);
+  preNum.textContent = String(Math.floor(prog)).padStart(3,'0');
+  preBar.style.width = prog + '%';
+  if(prog >= 100){
+    clearInterval(preTimer);
+    setTimeout(()=>{
+      pre.classList.add('hide');
+      document.body.classList.add('ready');
+      setTimeout(()=>pre.remove(), 950);
+    }, 250);
+  }
+}, 95);
+
+/* ============ часы (Москва) ============ */
+const clock = document.getElementById('clock');
+const fmt = new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const tickClock = ()=> clock.textContent = 'МСК ' + fmt.format(new Date());
+tickClock(); setInterval(tickClock, 1000);
+
+/* ============ курсор ============ */
+const dot = document.getElementById('cursorDot'),
+      ring = document.getElementById('cursorRing'),
+      cursorTxt = document.getElementById('cursorTxt');
+let mx = -100, my = -100, rx = -100, ry = -100;
+const fine = matchMedia('(hover:hover) and (pointer:fine)').matches;
+
+if(fine){
+  document.documentElement.classList.add('has-cursor');
+  window.addEventListener('mousemove', e=>{ mx = e.clientX; my = e.clientY; });
+  document.addEventListener('mouseover', e=>{
+    const t = e.target.closest('[data-cursor]');
+    if(!t) return;
+    ring.dataset.mode = t.dataset.cursor;
+    if(t.dataset.cursor === 'view') cursorTxt.textContent = t.dataset.label || 'Смотреть';
+  });
+  document.addEventListener('mouseout', e=>{
+    if(e.target.closest('[data-cursor]')) ring.dataset.mode = '';
+  });
+}
+
+/* ============ магнитные кнопки ============ */
+if(fine){
+  document.querySelectorAll('.magnetic').forEach(el=>{
+    el.style.transition = 'transform .3s cubic-bezier(.22,1,.36,1)';
+    el.addEventListener('mousemove', e=>{
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left - r.width/2) * .28;
+      const y = (e.clientY - r.top - r.height/2) * .28;
+      el.style.transform = `translate(${x}px,${y}px)`;
+    });
+    el.addEventListener('mouseleave', ()=> el.style.transform = '');
+  });
+}
+
+/* ============ hero: вес букв от курсора ============ */
+const heroLetters = [...document.querySelectorAll('.hero-title .ch')].map(el=>({el, w:300}));
+
+/* ============ единый rAF-цикл ============ */
+function loop(){
+  /* курсор */
+  if(fine){
+    rx += (mx - rx) * .16; ry += (my - ry) * .16;
+    dot.style.transform  = `translate(${mx}px,${my}px) translate(-50%,-50%)`;
+    ring.style.transform = `translate(${rx}px,${ry}px) translate(-50%,-50%)`;
+  }
+  /* вес букв */
+  heroLetters.forEach(o=>{
+    const r = o.el.getBoundingClientRect();
+    const d = Math.hypot(mx - (r.left + r.width/2), my - (r.top + r.height/2));
+    const target = 300 + Math.max(0, 1 - d/280) * 580;
+    o.w += (target - o.w) * .14;
+    if(Math.abs(target - o.w) > .4) o.el.style.fontVariationSettings = `'wght' ${o.w|0}`;
+  });
+  /* параллакс фото */
+  const ph = document.querySelector('.about-photo img');
+  if(ph){
+    const r = ph.getBoundingClientRect();
+    if(r.bottom > 0 && r.top < innerHeight){
+      const p = (r.top + r.height/2 - innerHeight/2) / innerHeight;
+      ph.style.transform = `translateY(${p * -26}px) scale(1.12)`;
+    }
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============ reveal при скролле ============ */
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      const el = en.target;
+      [...el.querySelectorAll('.reveal-line')].forEach((line,i)=>{
+        line.style.transitionDelay = (i * .1) + 's';
+        line.classList.add('in-view');
+      });
+      if(el.classList.contains('reveal-line')) el.classList.add('in-view');
+      io.unobserve(el);
+    }
+  });
+},{threshold:.15});
+document.querySelectorAll('section, .footer').forEach(s=>io.observe(s));
+
+/* ============ хедер: фон + прогресс ============ */
+const header = document.getElementById('siteHeader'),
+      progressBar = document.getElementById('progress');
+function onScroll(){
+  header.classList.toggle('scrolled', scrollY > 40);
+  const h = document.documentElement.scrollHeight - innerHeight;
+  progressBar.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`;
+}
+addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+/* ============ кейс-оверлей ============ */
+const caseEl = document.getElementById('case'),
+      caseScroll = document.getElementById('caseScroll');
+let currentCase = 0;
+
+function fillCase(i){
+  const p = projects[i];
+  document.getElementById('caseNum').textContent = `${String(i+1).padStart(2,'0')} / ${String(projects.length).padStart(2,'0')}`;
+  document.getElementById('caseName').textContent = p.name;
+  document.getElementById('caseMeta').innerHTML = `<b>${p.cat}</b> · ${p.client}`;
+  const img = document.getElementById('caseImg');
+  img.src = p.img; img.alt = `Проект «${p.name}» — ${p.cat}`;
+  document.getElementById('caseTask').textContent = p.task;
+  document.getElementById('caseSol').textContent = p.sol;
+  document.getElementById('caseTags').innerHTML = p.tags.map(t=>`<i>${t}</i>`).join('');
+}
+function openCase(i){
+  currentCase = i;
+  fillCase(i);
+  caseScroll.scrollTop = 0;
+  caseEl.classList.add('open');
+  caseEl.setAttribute('aria-hidden','false');
+  document.body.classList.add('lock');
+  ring.dataset.mode = '';
+}
+function closeCase(){
+  caseEl.classList.remove('open');
+  caseEl.setAttribute('aria-hidden','true');
+  document.body.classList.remove('lock');
+}
+worksTrack.addEventListener('click', e=>{
+  const card = e.target.closest('.work-card');
+  if(card) openCase(+card.dataset.index);
+});
+worksTrack.addEventListener('keydown', e=>{
+  const card = e.target.closest('.work-card');
+  if(card && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openCase(+card.dataset.index); }
+});
+document.getElementById('caseClose').addEventListener('click', closeCase);
+document.getElementById('caseBackdrop').addEventListener('click', closeCase);
+document.getElementById('caseNext').addEventListener('click', ()=>{
+  caseScroll.style.opacity = 0;
+  setTimeout(()=>{
+    currentCase = (currentCase + 1) % projects.length;
+    fillCase(currentCase);
+    caseScroll.scrollTop = 0;
+    caseScroll.style.opacity = 1;
+  }, 250);
+});
+addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){ closeCase(); document.body.classList.remove('menu-open'); }
+});
+
+/* ============ копирование почты + toast ============ */
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toast.classList.remove('show'), 2600);
+}
+document.getElementById('copyBtn').addEventListener('click', async ()=>{
+  const email = 'aleks.masterov@inbox.ru';
+  try{
+    await navigator.clipboard.writeText(email);
+  }catch(_){
+    const ta = document.createElement('textarea');
+    ta.value = email; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  showToast('Почта скопирована — напишите, когда будете готовы');
+});
+
+/* ============ мобильное меню / наверх ============ */
+document.getElementById('burger').addEventListener('click', ()=> document.body.classList.toggle('menu-open'));
+document.querySelectorAll('.mobile-menu a').forEach(a=> a.addEventListener('click', ()=> document.body.classList.remove('menu-open')));
+document.getElementById('toTop').addEventListener('click', ()=> scrollTo({top:0, behavior:'smooth'}));
+
+/* ============ вторая половина marquee для бесшовности ============ */
+const track = document.getElementById('marqueeTrack');
+track.appendChild(track.firstElementChild.cloneNode(true));
+</script>
+</body>
+</html>
